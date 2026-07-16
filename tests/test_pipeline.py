@@ -35,19 +35,29 @@ class PipelineTests(unittest.TestCase):
                 "restricted_zone_intrusion": {"minimum_duration_seconds": 1, "cooldown_seconds": 5, "danger_direction_cosine_threshold": 0.5},
                 "person_running_on_track": {"minimum_duration_seconds": 0.5, "cooldown_seconds": 5, "minimum_normalized_speed": 0.9},
                 "possible_person_down": {"minimum_duration_seconds": 1, "cooldown_seconds": 5, "minimum_aspect_ratio": 1.1, "maximum_normalized_speed": 0.08, "minimum_pose_horizontal_score": 0.65},
-                "crowd_compression": {"minimum_duration_seconds": 1, "cooldown_seconds": 5, "minimum_density_ratio": 0.85, "minimum_density_growth": 0.4, "maximum_average_normalized_speed": 0.12},
+                "crowd_compression": {"minimum_duration_seconds": 1, "cooldown_seconds": 5, "minimum_density_ratio": 0.85, "minimum_density_growth": 0.4, "maximum_average_normalized_speed": 0.12, "density_growth_window_seconds": 2},
             }
         )
 
     def test_cached_tracks_produce_four_explainable_incidents(self):
         frames = [
             {"frame_index": 0, "timestamp_seconds": 0.0, "tracks": [track(1, 5, 10), track(2, 25, 10), track(3, 210, 10, 14, 10), track(10, 110, 10)]},
-            {"frame_index": 1, "timestamp_seconds": 1.0, "tracks": [track(1, 5, 10), track(2, 35, 10), track(3, 210, 10, 14, 10), track(10, 110, 10), track(11, 120, 10)]},
+            {"frame_index": 1, "timestamp_seconds": 1.0, "tracks": [track(1, 5, 10), track(2, 35, 10), track(3, 210, 10, 14, 10), track(10, 110, 10)]},
             {"frame_index": 2, "timestamp_seconds": 2.0, "tracks": [track(1, 5, 10), track(2, 45, 10), track(3, 210, 10, 14, 10), track(10, 110, 10), track(11, 120, 10)]},
+            {"frame_index": 3, "timestamp_seconds": 3.0, "tracks": [track(1, 5, 10), track(2, 55, 10), track(3, 210, 10, 14, 10), track(10, 110, 10), track(11, 120, 10)]},
         ]
         incidents = SafetyPipeline(self.camera, self.rules, source_mode="cached_ai").process_cached_frames(frames)
         self.assertEqual({incident.incident_type for incident in incidents}, {"restricted_zone_intrusion", "person_running_on_track", "possible_person_down", "crowd_compression"})
         self.assertEqual(len({incident.incident_id for incident in incidents}), 4)
+
+    def test_crowd_growth_does_not_use_stale_video_start_baseline(self):
+        frames = [
+            {"frame_index": 0, "timestamp_seconds": 0.0, "tracks": [track(10, 110, 10)]},
+            {"frame_index": 10, "timestamp_seconds": 10.0, "tracks": [track(10, 110, 10), track(11, 120, 10)]},
+            {"frame_index": 11, "timestamp_seconds": 11.0, "tracks": [track(10, 110, 10), track(11, 120, 10)]},
+        ]
+        incidents = SafetyPipeline(self.camera, self.rules, source_mode="cached_ai").process_cached_frames(frames)
+        self.assertNotIn("crowd_compression", {incident.incident_type for incident in incidents})
 
     def test_cached_loader_rejects_missing_file_and_mode_never_falls_back(self):
         with self.assertRaises(FileNotFoundError):

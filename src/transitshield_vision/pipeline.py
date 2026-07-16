@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from collections import defaultdict
+from collections import defaultdict, deque
 from typing import Any, Iterable
 
 from .config import CameraConfig
@@ -29,7 +29,8 @@ class SafetyPipeline:
         self.running = RunningOnTrackDetector(float(running["minimum_normalized_speed"]), float(running["minimum_duration_seconds"]), float(running["cooldown_seconds"]))
         self.person_down = PersonDownDetector(float(down["minimum_aspect_ratio"]), float(down["maximum_normalized_speed"]), float(down["minimum_duration_seconds"]), float(down["cooldown_seconds"]), float(down.get("minimum_pose_horizontal_score", 0.65)))
         self.crowd = CrowdCompressionDetector(float(crowd["minimum_density_ratio"]), float(crowd["minimum_density_growth"]), float(crowd["maximum_average_normalized_speed"]), float(crowd["minimum_duration_seconds"]), float(crowd["cooldown_seconds"]))
-        self._crowd_baseline: dict[str, float] = {}
+        self._crowd_growth_window = float(crowd.get("density_growth_window_seconds", 2.0))
+        self._crowd_history: dict[str, deque[tuple[float, float]]] = defaultdict(deque)
         self._incident_sequence = 0
 
     def _observation(self, raw: dict[str, Any], frame_index: int, timestamp: float) -> TrackObservation:
@@ -78,8 +79,14 @@ class SafetyPipeline:
             for zone in crowd_zones:
                 members = [observation for observation in observations if point_in_polygon(observation.footpoint_xy, zone.polygon)]
                 density_ratio = len(members) / max(zone.capacity or 1, 1)
-                baseline = self._crowd_baseline.setdefault(zone.zone_id, density_ratio)
-                density_growth = density_ratio - baseline
+                history = self._crowd_history[zone.zone_id]
+                target = timestamp - self._crowd_growth_window
+                oldest_allowed = timestamp - 2 * self._crowd_growth_window
+                while history and history[0][0] < oldest_allowed:
+                    history.popleft()
+                eligible = [ratio for sample_time, ratio in history if sample_time <= target]
+                density_growth = density_ratio - eligible[-1] if eligible else 0.0
+                history.append((timestamp, density_ratio))
                 speeds = [states[item.track_id].normalized_speed for item in members]
                 average_speed = sum(speeds) / len(speeds) if speeds else 0.0
                 directions = [states[item.track_id].direction_vector for item in members if states[item.track_id].direction_vector != (0.0, 0.0)]
