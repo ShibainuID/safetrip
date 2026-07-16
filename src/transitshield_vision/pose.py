@@ -33,7 +33,7 @@ def body_horizontal_score(keypoints: Sequence[Keypoint], minimum_visibility: flo
     return None if length == 0 else abs(dx) / length
 
 
-def _iou(left: Sequence[float], right: Sequence[float]) -> float:
+def bbox_iou(left: Sequence[float], right: Sequence[float]) -> float:
     intersection_width = max(0.0, min(left[2], right[2]) - max(left[0], right[0]))
     intersection_height = max(0.0, min(left[3], right[3]) - max(left[1], right[1]))
     intersection = intersection_width * intersection_height
@@ -45,7 +45,7 @@ def _iou(left: Sequence[float], right: Sequence[float]) -> float:
 def match_pose_scores(tracks: Sequence[TrackObservation], poses: Sequence[tuple[Sequence[float], float]], minimum_iou: float = 0.3) -> dict[int, float]:
     matched: dict[int, float] = {}
     for track in tracks:
-        candidates = [(_iou(track.bbox_xyxy, bbox), score) for bbox, score in poses]
+        candidates = [(bbox_iou(track.bbox_xyxy, bbox), score) for bbox, score in poses]
         if candidates:
             overlap, score = max(candidates, key=lambda item: item[0])
             if overlap >= minimum_iou:
