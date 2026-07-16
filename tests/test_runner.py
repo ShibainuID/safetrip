@@ -82,6 +82,32 @@ class RunnerTests(unittest.TestCase):
             cache = json.loads((output / "frame-events/unused_tracks.jsonl").read_text(encoding="utf-8"))
             self.assertEqual(cache["pose_scores"], {"1": 0.8})
 
+    def test_full_ai_invokes_evidence_generator_for_confirmed_incident(self):
+        class Tracker:
+            def track(self, _frame, *, frame_index, timestamp_seconds):
+                return [TrackObservation(frame_index, timestamp_seconds, 1, 0.9, (0, 0, 10, 5), (5, 5), 10, 5)]
+
+            def reset(self):
+                pass
+
+        rules = {event: values.copy() for event, values in self.rules.items()}
+        rules["possible_person_down"]["minimum_duration_seconds"] = 0
+        calls = []
+        with tempfile.TemporaryDirectory() as directory, patch(
+            "transitshield_vision.runner.iter_video_frames",
+            return_value=iter([VideoFrame(0, 0.0, 25.0, "frame")]),
+        ):
+            result = run_pipeline(
+                parse_runtime_config({"execution_mode": "full_ai", "save_annotated_video": False, "pose_weights": None}),
+                self.camera,
+                rules,
+                output_root=Path(directory) / "out",
+                tracker=Tracker(),
+                evidence_generator=lambda camera, incident, frames, root: calls.append((camera.camera_id, incident.incident_id, root)),
+            )
+            self.assertEqual(len(result.incidents), 1)
+            self.assertEqual(len(calls), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

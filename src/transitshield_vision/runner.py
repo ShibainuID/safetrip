@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import CameraConfig, RuntimeConfig
+from .evidence import generate_evidence_for_incident, write_metadata_only
 from .fallback import load_cached_frames, load_manual_incidents, select_execution_source
 from .incident_export import write_incidents
 from .pipeline import SafetyPipeline
@@ -95,6 +96,7 @@ def run_pipeline(
     manual_path: str | Path | None = None,
     tracker: UltralyticsByteTracker | None = None,
     pose_estimator: UltralyticsPoseEstimator | None = None,
+    evidence_generator: Any = None,
 ) -> RunResult:
     started = time.perf_counter()
     mode = select_execution_source(runtime.execution_mode)
@@ -107,6 +109,13 @@ def run_pipeline(
     if mode == "full_ai":
         frames, warnings = _run_tracking(runtime, camera, default_cache, tracker, pose_estimator)
         incidents = SafetyPipeline(camera, event_rules, source_mode=mode).process_cached_frames(frames)
+        evidence_generator = evidence_generator or generate_evidence_for_incident
+        for incident in incidents:
+            try:
+                evidence_generator(camera, incident, frames, output_root / "incidents")
+            except Exception as error:
+                write_metadata_only(incident, root=output_root / "incidents")
+                warnings.append(f"evidence generation failed for {incident.incident_id}: {error}")
     elif mode == "cached_ai":
         frames = load_cached_frames(cache_path or default_cache)
         incidents = SafetyPipeline(camera, event_rules, source_mode=mode).process_cached_frames(frames)

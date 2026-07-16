@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
 
-from .schemas import Incident
+from .geometry import bbox_footpoint
+from .schemas import Incident, TrackObservation
 
 
 @dataclass(frozen=True)
@@ -75,3 +76,54 @@ def write_evidence(
     finally:
         writer.release()
     return paths
+
+
+def write_metadata_only(incident: Incident, *, root: str | Path = "outputs/incidents") -> dict[str, str]:
+    directory = ensure_evidence_directory(incident.incident_id, root)
+    paths = {
+        "snapshot_raw": (directory / "snapshot_raw.jpg").as_posix(),
+        "snapshot_annotated": (directory / "snapshot_annotated.jpg").as_posix(),
+        "clip": (directory / "evidence.mp4").as_posix(),
+        "metadata": (directory / "metadata.json").as_posix(),
+    }
+    incident.evidence = paths
+    Path(paths["metadata"]).write_text(json.dumps(incident.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
+    return paths
+
+
+def generate_evidence_for_incident(camera: Any, incident: Incident, cached_frames: Sequence[dict[str, Any]], root: str | Path) -> dict[str, str]:
+    from .video_io import iter_video_frames
+    from .visualization import annotate_frame
+
+    # ponytail: re-read the short demo video per incident; batch extraction if incident volume matters.
+    records = {int(frame["frame_index"]): frame for frame in cached_frames}
+    start = max(0.0, incident.timestamp_start_seconds - 5.0)
+    end = (incident.timestamp_end_seconds or incident.timestamp_detected_seconds) + 5.0
+    evidence_frames: list[EvidenceFrame] = []
+    fps = camera.fps_override or 0.0
+    for video_frame in iter_video_frames(camera.video_path, fps_override=camera.fps_override):
+        if video_frame.timestamp_seconds < start:
+            continue
+        if video_frame.timestamp_seconds > end:
+            break
+        fps = video_frame.fps
+        record = records.get(video_frame.frame_index, {"tracks": []})
+        tracks = []
+        for raw in record.get("tracks", []):
+            bbox = tuple(float(value) for value in raw["bbox_xyxy"])
+            tracks.append(
+                TrackObservation(
+                    video_frame.frame_index,
+                    video_frame.timestamp_seconds,
+                    int(raw["track_id"]),
+                    float(raw.get("confidence", 0.0)),
+                    bbox,
+                    bbox_footpoint(bbox),
+                    max(0.0, bbox[2] - bbox[0]),
+                    max(0.0, bbox[3] - bbox[1]),
+                )
+            )
+        raw_frame = video_frame.raw_bgr_frame.copy()
+        annotated = annotate_frame(video_frame.raw_bgr_frame, camera.zones, tracks, [incident.incident_type])
+        evidence_frames.append(EvidenceFrame(video_frame.timestamp_seconds, raw_frame, annotated))
+    return write_evidence(incident, evidence_frames, fps=fps, root=root)
