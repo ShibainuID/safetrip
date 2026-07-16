@@ -108,6 +108,31 @@ class RunnerTests(unittest.TestCase):
             self.assertEqual(len(result.incidents), 1)
             self.assertEqual(len(calls), 1)
 
+    def test_full_ai_resets_tracker_when_frame_processing_fails(self):
+        class Tracker:
+            reset_called = False
+
+            def track(self, *_args, **_kwargs):
+                raise RuntimeError("tracking failed")
+
+            def reset(self):
+                self.reset_called = True
+
+        tracker = Tracker()
+        with tempfile.TemporaryDirectory() as directory, patch(
+            "transitshield_vision.runner.iter_video_frames",
+            return_value=iter([VideoFrame(0, 0.0, 25.0, "frame")]),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "tracking failed"):
+                run_pipeline(
+                    parse_runtime_config({"execution_mode": "full_ai", "save_annotated_video": False, "pose_weights": None}),
+                    self.camera,
+                    self.rules,
+                    output_root=Path(directory) / "out",
+                    tracker=tracker,
+                )
+        self.assertTrue(tracker.reset_called)
+
 
 if __name__ == "__main__":
     unittest.main()

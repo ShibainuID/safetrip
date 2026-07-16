@@ -98,9 +98,9 @@ def _run_tracking(
     finally:
         if sink is not None:
             sink.close()
+        tracker.reset()
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     cache_path.write_text("".join(json.dumps(frame, sort_keys=True) + "\n" for frame in frames), encoding="utf-8")
-    tracker.reset()
     return frames, warnings
 
 
