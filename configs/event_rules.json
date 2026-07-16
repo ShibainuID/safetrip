@@ -12,7 +12,7 @@
     "minimum_normalized_speed": 0.9
   },
   "possible_person_down": {
-    "minimum_duration_seconds": 3.0,
+    "minimum_duration_seconds": 1.0,
     "cooldown_seconds": 15.0,
     "minimum_aspect_ratio": 1.1,
     "maximum_normalized_speed": 0.08,
