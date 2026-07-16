@@ -1,0 +1,67 @@
+import tempfile
+import unittest
+from pathlib import Path
+
+from transitshield_vision.config import parse_camera_config, parse_event_rules
+from transitshield_vision.fallback import load_cached_frames, select_execution_source
+from transitshield_vision.pipeline import SafetyPipeline
+
+
+def track(track_id, x, y, width=4, height=10, confidence=0.9):
+    return {
+        "track_id": track_id,
+        "confidence": confidence,
+        "bbox_xyxy": [x - width / 2, y - height, x + width / 2, y],
+    }
+
+
+class PipelineTests(unittest.TestCase):
+    def setUp(self):
+        self.camera = parse_camera_config(
+            {
+                "camera_id": "CAM",
+                "video_path": "demo.mp4",
+                "zones": [
+                    {"zone_id": "RESTRICTED", "zone_type": "restricted", "polygon": [[0, 0], [10, 0], [10, 20], [0, 20]], "danger_direction": [1, 0]},
+                    {"zone_id": "TRACK", "zone_type": "track_area", "polygon": [[20, 0], [80, 0], [80, 20], [20, 20]]},
+                    {"zone_id": "CROWD", "zone_type": "crowd_monitoring", "polygon": [[100, 0], [150, 0], [150, 20], [100, 20]], "capacity": 2},
+                    {"zone_id": "NORMAL", "zone_type": "normal", "polygon": [[180, 0], [250, 0], [250, 20], [180, 20]]},
+                ],
+            },
+            require_video=False,
+        )
+        self.rules = parse_event_rules(
+            {
+                "restricted_zone_intrusion": {"minimum_duration_seconds": 1, "cooldown_seconds": 5, "danger_direction_cosine_threshold": 0.5},
+                "person_running_on_track": {"minimum_duration_seconds": 0.5, "cooldown_seconds": 5, "minimum_normalized_speed": 0.9},
+                "possible_person_down": {"minimum_duration_seconds": 1, "cooldown_seconds": 5, "minimum_aspect_ratio": 1.1, "maximum_normalized_speed": 0.08, "minimum_pose_horizontal_score": 0.65},
+                "crowd_compression": {"minimum_duration_seconds": 1, "cooldown_seconds": 5, "minimum_density_ratio": 0.85, "minimum_density_growth": 0.4, "maximum_average_normalized_speed": 0.12},
+            }
+        )
+
+    def test_cached_tracks_produce_four_explainable_incidents(self):
+        frames = [
+            {"frame_index": 0, "timestamp_seconds": 0.0, "tracks": [track(1, 5, 10), track(2, 25, 10), track(3, 210, 10, 14, 10), track(10, 110, 10)]},
+            {"frame_index": 1, "timestamp_seconds": 1.0, "tracks": [track(1, 5, 10), track(2, 35, 10), track(3, 210, 10, 14, 10), track(10, 110, 10), track(11, 120, 10)]},
+            {"frame_index": 2, "timestamp_seconds": 2.0, "tracks": [track(1, 5, 10), track(2, 45, 10), track(3, 210, 10, 14, 10), track(10, 110, 10), track(11, 120, 10)]},
+        ]
+        incidents = SafetyPipeline(self.camera, self.rules, source_mode="cached_ai").process_cached_frames(frames)
+        self.assertEqual({incident.incident_type for incident in incidents}, {"restricted_zone_intrusion", "person_running_on_track", "possible_person_down", "crowd_compression"})
+        self.assertEqual(len({incident.incident_id for incident in incidents}), 4)
+
+    def test_cached_loader_rejects_missing_file_and_mode_never_falls_back(self):
+        with self.assertRaises(FileNotFoundError):
+            load_cached_frames("missing.jsonl")
+        with self.assertRaisesRegex(ValueError, "execution_mode"):
+            select_execution_source("automatic")
+        self.assertEqual(select_execution_source("full_ai"), "full_ai")
+
+    def test_cached_loader_reads_jsonl(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "tracks.jsonl"
+            path.write_text('{"frame_index": 0, "timestamp_seconds": 0, "tracks": []}\n', encoding="utf-8")
+            self.assertEqual(load_cached_frames(path)[0]["frame_index"], 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
