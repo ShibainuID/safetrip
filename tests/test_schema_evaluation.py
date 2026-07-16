@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from transitshield_vision.evaluation import GroundTruthEvent, evaluate_events, temporal_iou
-from transitshield_vision.evidence import evidence_paths
+from transitshield_vision.evidence import EvidenceFrame, evidence_paths, write_evidence
 from transitshield_vision.incident_export import write_incidents
 from transitshield_vision.schemas import Incident
 
@@ -40,6 +40,55 @@ class SchemaAndEvaluationTests(unittest.TestCase):
     def test_evidence_paths_are_deterministic_and_relative(self):
         paths = evidence_paths("INC_CAM_000001")
         self.assertEqual(paths["clip"], "outputs/incidents/INC_CAM_000001/evidence.mp4")
+
+    def test_evidence_writer_creates_four_reviewable_artifacts(self):
+        class Frame:
+            shape = (10, 20, 3)
+
+        class VideoWriter:
+            def __init__(self, path, *_args):
+                self.path = Path(path)
+                self.frames = []
+
+            def isOpened(self):
+                return True
+
+            def write(self, frame):
+                self.frames.append(frame)
+
+            def release(self):
+                self.path.write_bytes(b"video")
+
+        class CV2:
+            @staticmethod
+            def imwrite(path, _frame):
+                Path(path).write_bytes(b"image")
+                return True
+
+            @staticmethod
+            def VideoWriter(path, *_args):
+                return VideoWriter(path, *_args)
+
+            @staticmethod
+            def VideoWriter_fourcc(*_args):
+                return 0
+
+        incident = Incident(
+            "INC_CAM_000001", "person_running_on_track", "CAM", "TRACK", ["track:1"],
+            1, 2, None, 1, 0.9, {"normalized_speed": 1.2},
+            {"snapshot_raw": None, "snapshot_annotated": None, "clip": None, "metadata": None}, "full_ai",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            paths = write_evidence(
+                incident,
+                [EvidenceFrame(1, Frame(), Frame()), EvidenceFrame(2, Frame(), Frame()), EvidenceFrame(3, Frame(), Frame())],
+                fps=1,
+                root=directory,
+                cv2_module=CV2,
+            )
+            self.assertTrue(all(Path(path).is_file() for path in paths.values()))
+            metadata = json.loads(Path(paths["metadata"]).read_text(encoding="utf-8"))
+            self.assertEqual(metadata["incident_id"], "INC_CAM_000001")
 
     def test_temporal_iou_and_false_alert_count_by_event(self):
         self.assertAlmostEqual(temporal_iou(0, 4, 2, 6), 2 / 6)
