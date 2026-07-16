@@ -49,6 +49,8 @@ def _run_tracking(
             pose_estimator = UltralyticsPoseEstimator(runtime.pose_weights, device=runtime.device, confidence_threshold=runtime.person_confidence_threshold)
         except Exception as error:
             warnings.append(f"pose model disabled: {error}")
+    pose_tracking_enabled = pose_estimator is not None
+    pose_tracker_to_reset = pose_estimator
     frames: list[dict[str, Any]] = []
     sink: AnnotatedVideoSink | None = None
     annotation_disabled = not runtime.save_annotated_video
@@ -60,6 +62,7 @@ def _run_tracking(
             fps_override=camera.fps_override,
         ):
             tracks = tracker.track(video_frame.raw_bgr_frame, frame_index=video_frame.frame_index, timestamp_seconds=video_frame.timestamp_seconds)
+            poses = []
             pose_scores: dict[int, float] = {}
             if pose_estimator is not None:
                 try:
@@ -78,27 +81,38 @@ def _run_tracking(
                     if sink is not None:
                         sink.close()
                         sink = None
-            frames.append(
-                {
-                    "frame_index": video_frame.frame_index,
-                    "timestamp_seconds": video_frame.timestamp_seconds,
-                    "fps": video_frame.fps,
-                    "pose_scores": {str(track_id): score for track_id, score in pose_scores.items()},
-                    "tracks": [
-                        {
-                            "track_id": item.track_id,
-                            "confidence": item.confidence,
-                            "bbox_xyxy": list(item.bbox_xyxy),
-                            "footpoint_xy": list(item.footpoint_xy),
-                        }
-                        for item in tracks
-                    ],
-                }
-            )
+            frame = {
+                "frame_index": video_frame.frame_index,
+                "timestamp_seconds": video_frame.timestamp_seconds,
+                "fps": video_frame.fps,
+                "pose_scores": {str(track_id): score for track_id, score in pose_scores.items()},
+                "tracks": [
+                    {
+                        "track_id": item.track_id,
+                        "confidence": item.confidence,
+                        "bbox_xyxy": list(item.bbox_xyxy),
+                        "footpoint_xy": list(item.footpoint_xy),
+                    }
+                    for item in tracks
+                ],
+            }
+            if pose_tracking_enabled:
+                frame["pose_tracks"] = [
+                    {
+                        "track_id": item.track_id,
+                        "confidence": item.confidence,
+                        "bbox_xyxy": list(item.bbox_xyxy),
+                        "horizontal_score": item.horizontal_score,
+                    }
+                    for item in poses
+                ]
+            frames.append(frame)
     finally:
         if sink is not None:
             sink.close()
         tracker.reset()
+        if pose_tracker_to_reset is not None:
+            pose_tracker_to_reset.reset()
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     cache_path.write_text("".join(json.dumps(frame, sort_keys=True) + "\n" for frame in frames), encoding="utf-8")
     return frames, warnings

@@ -23,6 +23,7 @@ class SafetyPipeline:
         self.source_mode = source_mode
         self.evidence_root = evidence_root
         self.track_states = TrackStateManager()
+        self.pose_track_states = TrackStateManager()
         restricted = event_rules["restricted_zone_intrusion"]
         running = event_rules["person_running_on_track"]
         down = event_rules["possible_person_down"]
@@ -59,6 +60,9 @@ class SafetyPipeline:
             timestamp = float(frame["timestamp_seconds"])
             observations = [self._observation(raw, frame_index, timestamp) for raw in frame.get("tracks", [])]
             states = {observation.track_id: self.track_states.update(observation) for observation in observations}
+            pose_tracking = "pose_tracks" in frame
+            pose_observations = [self._observation(raw, frame_index, timestamp) for raw in frame.get("pose_tracks", [])]
+            pose_states = {observation.track_id: self.pose_track_states.update(observation) for observation in pose_observations}
             events: list[ConfirmedEvent] = []
 
             for observation in observations:
@@ -73,8 +77,24 @@ class SafetyPipeline:
                     event = self.running.update(self.camera.camera_id, zone.zone_id, observation.track_id, timestamp, inside, state.normalized_speed, observation.confidence, state.direction_vector)
                     if event:
                         events.append(event)
+                if not pose_tracking:
+                    aspect_ratio = observation.bbox_width / max(observation.bbox_height, 1.0)
+                    event = self.person_down.update(self.camera.camera_id, observation.track_id, timestamp, aspect_ratio, state.normalized_speed, frame.get("pose_scores", {}).get(str(observation.track_id)), observation.confidence)
+                    if event:
+                        events.append(event)
+
+            for raw, observation in zip(frame.get("pose_tracks", []), pose_observations, strict=True):
+                state = pose_states[observation.track_id]
                 aspect_ratio = observation.bbox_width / max(observation.bbox_height, 1.0)
-                event = self.person_down.update(self.camera.camera_id, observation.track_id, timestamp, aspect_ratio, state.normalized_speed, frame.get("pose_scores", {}).get(str(observation.track_id)), observation.confidence)
+                event = self.person_down.update(
+                    self.camera.camera_id,
+                    observation.track_id,
+                    timestamp,
+                    aspect_ratio,
+                    state.normalized_speed,
+                    raw.get("horizontal_score"),
+                    observation.confidence,
+                )
                 if event:
                     events.append(event)
 
@@ -101,6 +121,7 @@ class SafetyPipeline:
 
             incidents.extend(self._incident(event) for event in events)
             self.track_states.remove_stale(frame_index)
+            self.pose_track_states.remove_stale(frame_index)
         return incidents
 
     def _incident(self, event: ConfirmedEvent) -> Incident:

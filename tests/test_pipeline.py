@@ -15,6 +15,13 @@ def track(track_id, x, y, width=4, height=10, confidence=0.9):
     }
 
 
+def pose_track(track_id, x, y, width=14, height=10, confidence=0.9, horizontal_score=0.8):
+    return {
+        **track(track_id, x, y, width, height, confidence),
+        "horizontal_score": horizontal_score,
+    }
+
+
 class PipelineTests(unittest.TestCase):
     def setUp(self):
         self.camera = parse_camera_config(
@@ -58,6 +65,27 @@ class PipelineTests(unittest.TestCase):
         ]
         incidents = SafetyPipeline(self.camera, self.rules, source_mode="cached_ai").process_cached_frames(frames)
         self.assertNotIn("crowd_compression", {incident.incident_type for incident in incidents})
+
+    def test_pose_track_detects_person_who_falls_then_remains_down(self):
+        frames = [
+            {"frame_index": 0, "timestamp_seconds": 0.0, "tracks": [], "pose_tracks": [pose_track(7, 210, 10, width=4, horizontal_score=0.1)]},
+            {"frame_index": 1, "timestamp_seconds": 1.0, "tracks": [], "pose_tracks": [pose_track(7, 210, 10)]},
+            {"frame_index": 2, "timestamp_seconds": 2.0, "tracks": [], "pose_tracks": [pose_track(7, 210, 10)]},
+        ]
+
+        incidents = SafetyPipeline(self.camera, self.rules, source_mode="cached_ai").process_cached_frames(frames)
+
+        self.assertEqual([incident.incident_type for incident in incidents], ["possible_person_down"])
+
+    def test_pose_track_detects_person_already_down_on_first_frame(self):
+        frames = [
+            {"frame_index": 0, "timestamp_seconds": 0.0, "tracks": [], "pose_tracks": [pose_track(8, 210, 10)]},
+            {"frame_index": 1, "timestamp_seconds": 1.0, "tracks": [], "pose_tracks": [pose_track(8, 210, 10)]},
+        ]
+
+        incidents = SafetyPipeline(self.camera, self.rules, source_mode="cached_ai").process_cached_frames(frames)
+
+        self.assertEqual([incident.incident_type for incident in incidents], ["possible_person_down"])
 
     def test_cached_loader_rejects_missing_file_and_mode_never_falls_back(self):
         with self.assertRaises(FileNotFoundError):

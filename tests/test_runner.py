@@ -64,8 +64,13 @@ class RunnerTests(unittest.TestCase):
                 pass
 
         class Pose:
+            reset_called = False
+
             def estimate(self, _frame):
-                return [type("PoseResult", (), {"bbox_xyxy": (0, 0, 10, 5), "horizontal_score": 0.8})()]
+                return [type("PoseResult", (), {"track_id": 7, "bbox_xyxy": (0, 0, 10, 5), "confidence": 0.85, "horizontal_score": 0.8})()]
+
+            def reset(self):
+                self.reset_called = True
 
         with tempfile.TemporaryDirectory() as directory, patch(
             "transitshield_vision.runner.iter_video_frames",
@@ -82,6 +87,7 @@ class RunnerTests(unittest.TestCase):
             )
             cache = json.loads((output / "frame-events/unused_tracks.jsonl").read_text(encoding="utf-8"))
             self.assertEqual(cache["pose_scores"], {"1": 0.8})
+            self.assertEqual(cache["pose_tracks"], [{"track_id": 7, "confidence": 0.85, "bbox_xyxy": [0, 0, 10, 5], "horizontal_score": 0.8}])
 
     def test_full_ai_invokes_evidence_generator_for_confirmed_incident(self):
         class Tracker:
@@ -133,6 +139,39 @@ class RunnerTests(unittest.TestCase):
                     tracker=tracker,
                 )
         self.assertTrue(tracker.reset_called)
+
+    def test_full_ai_resets_optional_pose_tracker(self):
+        class Tracker:
+            def track(self, *_args, **_kwargs):
+                return []
+
+            def reset(self):
+                pass
+
+        class Pose:
+            reset_called = False
+
+            def estimate(self, _frame):
+                return []
+
+            def reset(self):
+                self.reset_called = True
+
+        pose = Pose()
+        with tempfile.TemporaryDirectory() as directory, patch(
+            "transitshield_vision.runner.iter_video_frames",
+            return_value=iter([VideoFrame(0, 0.0, 25.0, "frame")]),
+        ):
+            run_pipeline(
+                parse_runtime_config({"execution_mode": "full_ai", "save_annotated_video": False}),
+                self.camera,
+                self.rules,
+                output_root=Path(directory) / "out",
+                tracker=Tracker(),
+                pose_estimator=pose,
+            )
+
+        self.assertTrue(pose.reset_called)
 
 
 if __name__ == "__main__":
