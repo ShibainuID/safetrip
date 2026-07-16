@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from transitshield_vision.evaluation import GroundTruthEvent, evaluate_events, temporal_iou
+from transitshield_vision.evaluation import GroundTruthEvent, evaluate_by_event_type, evaluate_events, temporal_iou
 from transitshield_vision.evidence import EvidenceFrame, evidence_paths, write_evidence
 from transitshield_vision.incident_export import write_incidents
 from transitshield_vision.schemas import Incident
@@ -101,6 +101,13 @@ class SchemaAndEvaluationTests(unittest.TestCase):
         self.assertEqual(metrics["true_positives"], 1)
         self.assertEqual(metrics["false_alerts"], 1)
         self.assertEqual(metrics["false_alerts_per_camera_hour"], 1.0)
+
+    def test_metrics_are_reported_for_every_supported_event(self):
+        metrics = evaluate_by_event_type([], [], duration_hours=1.0)
+        self.assertEqual(
+            set(metrics),
+            {"restricted_zone_intrusion", "person_running_on_track", "possible_person_down", "crowd_compression"},
+        )
 
 
 if __name__ == "__main__":

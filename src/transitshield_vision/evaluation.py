@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from statistics import mean
 from typing import Any, Iterable
 
+from .schemas import EVENT_TYPES
+
 
 @dataclass(frozen=True)
 class GroundTruthEvent:
@@ -65,4 +67,18 @@ def evaluate_events(predictions: Iterable[dict[str, Any]], ground_truth: Iterabl
         "average_detection_latency_seconds": mean(latencies) if latencies else None,
         "false_alerts_per_camera_hour": false_alerts / duration_hours if duration_hours > 0 else None,
         "duplicate_alert_rate": false_alerts / len(predictions) if predictions else 0.0,
+    }
+
+
+def evaluate_by_event_type(predictions: Iterable[dict[str, Any]], ground_truth: Iterable[GroundTruthEvent], *, duration_hours: float, iou_threshold: float = 0.1) -> dict[str, dict[str, Any]]:
+    predictions = list(predictions)
+    ground_truth = list(ground_truth)
+    return {
+        event_type: evaluate_events(
+            [item for item in predictions if item.get("incident_type") == event_type],
+            [item for item in ground_truth if item.event_type == event_type],
+            duration_hours=duration_hours,
+            iou_threshold=iou_threshold,
+        )
+        for event_type in sorted(EVENT_TYPES)
     }
