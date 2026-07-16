@@ -22,6 +22,13 @@ The same commands can be run without activating the shell:
 conda run -n bdc2026-dinov3 env PYTHONPATH=src python -m pytest -q
 ```
 
+The server has no migration framework. After schema changes, rebuild the ignored hackathon database from the repository root:
+
+```bash
+rm server/data/transitshield.db
+python server/seed.py
+```
+
 ## Run one camera
 
 Full inference reads the camera video, runs YOLO/ByteTrack, and writes a reusable track cache:

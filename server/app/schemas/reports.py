@@ -22,9 +22,13 @@ class SearchAttributes(BaseModel):
         if (
             self.time_window_start is not None
             and self.time_window_end is not None
-            and self.time_window_end < self.time_window_start
         ):
-            raise ValueError("time_window_end must not be before time_window_start")
+            if (self.time_window_start.utcoffset() is None) != (
+                self.time_window_end.utcoffset() is None
+            ):
+                raise ValueError("time window datetimes must use matching timezone awareness")
+            if self.time_window_end < self.time_window_start:
+                raise ValueError("time_window_end must not be before time_window_start")
         return self
 
 
@@ -42,9 +46,13 @@ class ReportCreate(BaseModel):
         if (
             self.time_window_start is not None
             and self.time_window_end is not None
-            and self.time_window_end < self.time_window_start
         ):
-            raise ValueError("time_window_end must not be before time_window_start")
+            if (self.time_window_start.utcoffset() is None) != (
+                self.time_window_end.utcoffset() is None
+            ):
+                raise ValueError("time window datetimes must use matching timezone awareness")
+            if self.time_window_end < self.time_window_start:
+                raise ValueError("time_window_end must not be before time_window_start")
         return self
 
 

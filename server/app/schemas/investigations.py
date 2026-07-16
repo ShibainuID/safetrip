@@ -36,12 +36,12 @@ class CandidateSchema(BaseModel):
     clip_id: str = ""
     score: float
     explanation: str = ""
-    url: str = ""
-    snapshot_url: str = ""
+    url: Optional[str] = None
+    snapshot_url: Optional[str] = None
     camera_id: str = ""
     location: str = ""
     clip_metadata: dict = Field(default_factory=dict)
-    vlm_result: dict = Field(default_factory=dict)
+    vlm_result: Optional[VLMResult] = None
     media_available: bool = False
     timestamp: Optional[datetime.datetime] = None
     verification_status: str = "pending"

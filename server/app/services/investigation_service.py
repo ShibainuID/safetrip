@@ -50,14 +50,20 @@ class InvestigationService:
             return None
         candidate.verification_status = verification_status
         if verification_status == "confirmed":
-            self.db.add(InvestigationTimelineEntry(
-                investigation_id=candidate.investigation_id,
-                candidate_id=candidate.id,
-                timestamp=candidate.timestamp or datetime.datetime.utcnow(),
-                camera_id=candidate.camera_id,
-                note=f"Candidate {candidate_id} confirmed",
-                sort_order=candidate.score * 100,
-            ))
+            timeline_entry = (
+                self.db.query(InvestigationTimelineEntry)
+                .filter(InvestigationTimelineEntry.candidate_id == candidate.id)
+                .first()
+            )
+            if timeline_entry is None:
+                self.db.add(InvestigationTimelineEntry(
+                    investigation_id=candidate.investigation_id,
+                    candidate_id=candidate.id,
+                    timestamp=candidate.timestamp or datetime.datetime.utcnow(),
+                    camera_id=candidate.camera_id,
+                    note=f"Candidate {candidate_id} confirmed",
+                    sort_order=candidate.score * 100,
+                ))
             candidate.investigation.status = "in_progress"
         self._audit("candidate", candidate_id, verification_status)
         self.db.commit()
