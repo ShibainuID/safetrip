@@ -42,6 +42,7 @@ def _run_tracking(
         runtime.detector_weights,
         device=runtime.device,
         confidence_threshold=runtime.person_confidence_threshold,
+        image_size=runtime.detector_image_size,
     )
     warnings: list[str] = []
     if runtime.pose_weights and pose_estimator is None:

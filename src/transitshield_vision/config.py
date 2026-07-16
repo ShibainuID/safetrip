@@ -27,6 +27,7 @@ class RuntimeConfig:
     max_frames: int | None = None
     person_class_id: int = 0
     person_confidence_threshold: float = 0.35
+    detector_image_size: int = 640
     tracker: str = "bytetrack"
     detector_weights: str = "yolo11n.pt"
     pose_weights: str | None = "yolo11n-pose.pt"
@@ -59,6 +60,8 @@ def parse_runtime_config(data: dict[str, Any]) -> RuntimeConfig:
         raise ValueError("max_frames must be null or positive")
     if not 0 <= config.person_confidence_threshold <= 1:
         raise ValueError("person_confidence_threshold must be between 0 and 1")
+    if config.detector_image_size < 1:
+        raise ValueError("detector_image_size must be positive")
     return config
 
 

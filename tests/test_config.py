@@ -8,6 +8,10 @@ class ConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "execution_mode"):
             parse_runtime_config({"execution_mode": "automatic_fallback"})
 
+    def test_runtime_rejects_non_positive_detector_image_size(self):
+        with self.assertRaisesRegex(ValueError, "detector_image_size"):
+            parse_runtime_config({"detector_image_size": 0})
+
     def test_camera_rejects_invalid_polygon(self):
         with self.assertRaisesRegex(ValueError, "polygon"):
             parse_camera_config(

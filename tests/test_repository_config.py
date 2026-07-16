@@ -14,6 +14,8 @@ class RepositoryConfigTests(unittest.TestCase):
         self.assertIn("track_area", {zone.zone_type for zone in camera.zones})
         self.assertEqual(len(rules), 4)
         self.assertEqual(rules["crowd_compression"]["minimum_duration_seconds"], 1.0)
+        self.assertEqual(runtime.detector_image_size, 1280)
+        self.assertEqual(runtime.person_confidence_threshold, 0.15)
 
 
 if __name__ == "__main__":
