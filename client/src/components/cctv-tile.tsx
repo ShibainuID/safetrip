@@ -55,7 +55,7 @@ export function CctvTile({
       {alert && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-ink/70">
           <ShieldAlert className="h-10 w-10 text-alert animate-pulse" />
-          <span className="rounded-full bg-alert px-3 py-1 text-xs font-bold text-white uppercase tracking-wider">
+          <span className="rounded-full bg-alert px-3 py-1 text-xs font-bold text-white">
             Alert Security
           </span>
         </div>
