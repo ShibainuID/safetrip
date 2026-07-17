@@ -1,7 +1,17 @@
 import datetime
 import uuid
 
-from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 
 from ..database import Base
@@ -177,12 +187,16 @@ class CandidateClip(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     candidate_id = Column(String(64), unique=True, nullable=False, default=_uid)
+    clip_id = Column(String(64), default="")
     investigation_id = Column(Integer, ForeignKey("investigations.id"), nullable=False)
     score = Column(Float, default=0.0)
     explanation = Column(Text, default="")
-    url = Column(String(512), default="")
-    snapshot_url = Column(String(512), default="")
+    url = Column(String(512), nullable=True)
+    snapshot_url = Column(String(512), nullable=True)
     camera_id = Column(String(64), default="")
+    location = Column(String(256), default="")
+    clip_metadata = Column(JSON, default=dict)
+    vlm_result = Column(JSON, nullable=True, default=None)
     timestamp = Column(DateTime, nullable=True)
     verification_status = Column(String(32), default="pending")
 
@@ -191,12 +205,16 @@ class CandidateClip(Base):
 
 class InvestigationTimelineEntry(Base):
     __tablename__ = "investigation_timeline_entries"
+    __table_args__ = (
+        UniqueConstraint("candidate_id", name="uq_investigation_timeline_entries_candidate_id"),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     investigation_id = Column(Integer, ForeignKey("investigations.id"), nullable=False)
     candidate_id = Column(Integer, ForeignKey("candidate_clips.id"), nullable=True)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
     camera_id = Column(String(64), default="")
+    location = Column(String(256), default="")
     note = Column(Text, default="")
     sort_order = Column(Integer, default=0)
 

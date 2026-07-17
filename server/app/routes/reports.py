@@ -37,7 +37,10 @@ def extract_attributes(report_id: str, db: Session = Depends(get_db)):
 
 @router.patch("/reports/{report_id}/attributes")
 def update_attributes(report_id: str, data: AttributeUpdate, db: Session = Depends(get_db)):
-    report = ReportService(db).update_attributes(report_id, data.attributes)
+    report = ReportService(db).update_attributes(
+        report_id,
+        data.attributes.model_dump(mode="json"),
+    )
     if not report:
         raise HTTPException(404, "Report not found")
     return {"report_id": report_id, "attributes": report.attributes, "status": report.status}
