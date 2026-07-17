@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import Image from "next/image";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -24,8 +25,10 @@ export function FakeMap({
       )}
       aria-label="Map preview"
       role="img"
+      data-route={route ? "active" : "idle"}
     >
-      <img src="/image 19.png" alt="Map" className="absolute inset-0 w-full h-full object-cover" />
+      <Image src="/image 19.png" alt="Map showing the SafeTrip route" fill sizes="(max-width: 768px) 100vw, 60vw" className="object-cover" />
+      {route && <div className="absolute bottom-3 left-3 rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-white">Live route</div>}
     </div>
   );
 }

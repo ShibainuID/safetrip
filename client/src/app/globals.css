@@ -1,32 +1,125 @@
 @import "tailwindcss";
 
 @theme {
-  /* SAFE TRIP palette - see docs/DESIGN.md */
-  --color-primary: #0052ff; /* Coinbase Blue */
-  --color-primary-active: #003ecc;
-  --color-surface-soft: #f7f7f7;
-  --color-surface-strong: #eef0f3;
-  --color-hairline: #e2e8f0;
-  
-  --color-steel: #a9b4d0;
-  --color-cloud: #f4f4f6; /* Cloud Gray - app canvas */
-  --color-ink: #101828; /* Ink Navy - headings on light */
-  --color-muted: #667085; /* Slate Muted - secondary text */
-  --color-signal: #22c55e; /* Signal Green - online / resolved */
-  --color-alert: #d92d20; /* Alert Red - SOS / urgent */
-  --color-teal: #1f5f6b; /* Deep Teal - secondary actions */
-  --color-amber-soft: #f5a623; /* Amber Companion - avatar accent */
-  --color-frost: #d9e1f2; /* Soft white-blue text on navy */
+  --color-primary: oklch(0.58 0.245 263);
+  --color-primary-active: oklch(0.5 0.25 263);
+  --color-midnight: oklch(0.17 0.035 258);
+  --color-night: oklch(0.21 0.045 257);
+  --color-surface-soft: oklch(0.975 0.006 260);
+  --color-surface-strong: oklch(0.935 0.012 260);
+  --color-hairline: oklch(0.87 0.018 260);
+  --color-steel: oklch(0.69 0.035 260);
+  --color-cloud: oklch(0.965 0.008 260);
+  --color-ink: oklch(0.2 0.035 257);
+  --color-muted: oklch(0.46 0.035 258);
+  --color-signal: oklch(0.72 0.16 235);
+  --color-signal-ink: oklch(0.18 0.055 255);
+  --color-alert: oklch(0.58 0.22 27);
+  --color-teal: oklch(0.48 0.09 205);
+  --color-amber-soft: oklch(0.76 0.15 72);
+  --color-frost: oklch(0.88 0.035 255);
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--color-cloud);
   color: var(--color-ink);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
+  text-wrap: balance;
+  letter-spacing: -0.03em;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-signal);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--color-signal);
+  color: var(--color-signal-ink);
+}
+
+.landing-display {
+  font-size: clamp(3.25rem, 8vw, 6rem);
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+}
+
+.landing-section-title {
+  font-size: clamp(2.35rem, 5vw, 4.8rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+
+.text-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px oklch(0.42 0.09 255 / 0.55);
+}
+
+.operator-theme {
+  --color-white: oklch(0.235 0.038 257);
+  --color-cloud: oklch(0.17 0.032 257);
+  --color-ink: oklch(0.94 0.018 255);
+  --color-muted: oklch(0.7 0.03 257);
+  --color-surface-soft: oklch(0.205 0.034 257);
+  --color-surface-strong: oklch(0.275 0.042 257);
+  --color-hairline: oklch(0.36 0.038 257);
+  color-scheme: dark;
+}
+
+.commuter-theme {
+  --color-cloud: oklch(0.965 0.008 260);
+  --color-white: oklch(0.995 0.002 260);
+}
+
+.operator-theme input,
+.operator-theme select,
+.operator-theme textarea {
+  color-scheme: dark;
+}
+
+.operator-theme .text-white {
+  color: oklch(0.97 0.01 255) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
 }

@@ -104,14 +104,14 @@ export function IncidentCard({
   };
   
   return (
-    <article className="flex flex-col gap-4 rounded-[24px] bg-white border border-hairline shadow-sm p-5">
+    <article className="flex flex-col gap-4 rounded-2xl border border-hairline bg-white p-5">
       <div className="flex items-start justify-between">
         <h3 className="text-base font-bold text-ink">Incident #{incident.id}</h3>
         {isResolved && (
           <button 
             onClick={handleExportPDF}
             title="Export PDF"
-            className="rounded-full p-1 text-muted transition-colors hover:bg-surface-strong hover:text-ink"
+            className="rounded-lg p-2 text-muted transition-colors hover:bg-surface-strong hover:text-ink"
           >
             <Download className="h-4 w-4" />
           </button>
@@ -153,7 +153,7 @@ export function IncidentCard({
           <button 
             onClick={handleAnalyze}
             disabled={analyzing}
-            className="flex flex-1 items-center justify-center gap-2 rounded-full border border-hairline py-2.5 text-sm font-bold text-ink transition-colors hover:bg-surface-strong disabled:opacity-60"
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-hairline py-2.5 text-sm font-bold text-ink transition-colors hover:bg-surface-strong disabled:opacity-60"
           >
             {analyzing && <Loader2 className="h-4 w-4 animate-spin" />}
             Analyze
@@ -163,7 +163,7 @@ export function IncidentCard({
         {incident.status === "open" && onStatusChange && (
           <button 
             onClick={() => onStatusChange("assigned")}
-            className="flex-1 rounded-full bg-primary py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary-active"
+            className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary-active"
           >
             Assign
           </button>
@@ -172,7 +172,7 @@ export function IncidentCard({
         {(incident.status === "assigned" || incident.status === "in_progress") && onStatusChange && (
           <button 
             onClick={() => onStatusChange("resolved")}
-            className="flex-1 rounded-full bg-signal py-2.5 text-sm font-bold text-white transition-colors hover:bg-signal/80"
+            className="flex-1 rounded-xl bg-signal py-2.5 text-sm font-bold text-signal-ink transition-colors hover:bg-signal/80"
           >
             Resolve
           </button>
@@ -180,7 +180,7 @@ export function IncidentCard({
         
         {/* Fallback for the original actionLabel prop if needed */}
         {actionLabel && !onStatusChange && !isResolved && (
-          <button className="flex-1 rounded-full bg-primary py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary-active">
+          <button className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary-active">
             {actionLabel}
           </button>
         )}
