@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { CctvTile, type BoundingBox } from "@/components/cctv-tile";
 import { Calendar, MapPin, Search, Filter, Loader2, AlertTriangle, Radio } from "lucide-react";
 import { fetchCameras, type Camera, ApiError } from "@/lib/api";
+import {
+  parseProcessedFeedManifest,
+  type ProcessedFeature1Feed,
+} from "./processed-feeds";
 
 // Rotating demo bounding boxes — visual only, no live stream
 const DEMO_BOXES: BoundingBox[][] = [
@@ -50,6 +54,8 @@ function isAlert(cam: Camera): boolean {
 
 export default function LiveMonitoringPage() {
   const [cameras, setCameras] = useState<Camera[]>([]);
+  const [processedFeeds, setProcessedFeeds] = useState<ProcessedFeature1Feed[]>([]);
+  const [processedLoading, setProcessedLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState("");
@@ -58,6 +64,27 @@ export default function LiveMonitoringPage() {
   useEffect(() => {
     const tick = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(tick);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/videos/feature-1-processed/manifest.json", { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Manifest HTTP ${response.status}`);
+        return response.json() as Promise<unknown>;
+      })
+      .then((payload) => {
+        if (mounted) setProcessedFeeds(parseProcessedFeedManifest(payload));
+      })
+      .catch(() => {
+        if (mounted) setProcessedFeeds([]);
+      })
+      .finally(() => {
+        if (mounted) setProcessedLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -98,6 +125,12 @@ export default function LiveMonitoringPage() {
       c.name.toLowerCase().includes(filter.toLowerCase()) ||
       c.location.toLowerCase().includes(filter.toLowerCase()),
   );
+  const filteredProcessed = processedFeeds.filter(
+    (feed) =>
+      filter === "" ||
+      feed.name.toLowerCase().includes(filter.toLowerCase()) ||
+      feed.location.toLowerCase().includes(filter.toLowerCase()),
+  );
 
   const isUrgent = (cam: Camera) =>
     isAlert(cam) ||
@@ -124,8 +157,10 @@ export default function LiveMonitoringPage() {
         </div>
         <div className="flex items-center gap-2.5 rounded-full bg-surface-strong px-4 py-2.5 text-sm font-bold text-ink">
           <MapPin className="h-4 w-4 shrink-0 text-muted" />
-          {cameras.length > 0
-            ? `${cameras.length} camera${cameras.length !== 1 ? "s" : ""} online`
+          {processedFeeds.length > 0
+            ? `${processedFeeds.length} processed camera replays`
+            : cameras.length > 0
+              ? `${cameras.length} camera${cameras.length !== 1 ? "s" : ""} online`
             : "Loading cameras…"}
         </div>
         <div className="relative flex-1">
@@ -148,10 +183,49 @@ export default function LiveMonitoringPage() {
         </div>
       )}
 
-      {loading && cameras.length === 0 ? (
+      {loading && processedLoading && cameras.length === 0 ? (
         <div className="flex justify-center py-16">
           <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
         </div>
+      ) : processedFeeds.length > 0 ? (
+        <section>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold text-ink">Processed Feature 1 Replay</h2>
+              <p className="mt-1 text-sm text-muted">
+                YOLO and ByteTrack annotations generated before playback.
+              </p>
+            </div>
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+              Prerecorded pipeline output
+            </span>
+          </div>
+          {filteredProcessed.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-hairline bg-white p-10 text-center text-sm text-muted">
+              No processed camera output matches your filter.
+            </p>
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {filteredProcessed.map((feed) => (
+                <div key={feed.camera_id} className="space-y-2">
+                  <CctvTile
+                    label={`${feed.name} · ${feed.location}`}
+                    boxes={[]}
+                    videoSrc={feed.video_src}
+                  />
+                  <div className="flex items-center justify-between gap-3 px-1 text-xs text-muted">
+                    <span>YOLO + ByteTrack</span>
+                    <span className={feed.incident_count > 0 ? "font-bold text-alert" : "font-semibold text-signal"}>
+                      {feed.incident_count > 0
+                        ? `${feed.incident_count} event${feed.incident_count === 1 ? "" : "s"}`
+                        : "No event triggered"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       ) : (
         <>
           {/* Section 1: Priority Surveillance */}

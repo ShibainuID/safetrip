@@ -6,6 +6,7 @@ import { useAuth, homeForRole, type Role } from "@/lib/auth-context";
 import { motion } from "framer-motion";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { ArrowRight, MonitorCheck, TrainFront } from "lucide-react";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -46,77 +47,71 @@ export function LoginForm() {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="relative z-10 w-full max-w-[420px] rounded-[24px] border border-hairline bg-white px-8 pb-10 pt-12 shadow-sm"
+      transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+      className="relative z-10 w-full max-w-[480px]"
     >
-      <div className="mb-8 text-center">
-        <h2 className="text-2xl font-bold text-ink">Welcome back</h2>
-        <p className="mt-2 text-sm text-muted">
-          Sign in to your account to continue
+      <div className="mb-9">
+        <p className="mb-3 text-sm font-semibold text-primary">Select your SafeTrip workspace</p>
+        <h2 className="text-4xl font-semibold tracking-[-0.04em] text-ink">Continue to the demo</h2>
+        <p className="mt-3 text-sm leading-6 text-muted">
+          Choose a role and use any valid email address.
         </p>
       </div>
 
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-ink">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              placeholder="name@domain.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-ink placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+        <fieldset>
+          <legend className="mb-2 block text-sm font-semibold text-ink">Role</legend>
+          <div className="grid grid-cols-2 gap-3">
+            {([
+              ["commuter", "Commuter", TrainFront],
+              ["officer", "Control room", MonitorCheck],
+            ] as const).map(([value, label, Icon]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setRole(value)}
+                className={cn(
+                  "flex min-h-24 flex-col items-start justify-between rounded-xl border p-4 text-left transition-colors",
+                  role === value
+                    ? "border-primary bg-primary text-white"
+                    : "border-hairline bg-white text-ink hover:border-primary/45",
+                )}
+              >
+                <Icon className="h-5 w-5" />
+                <span className="text-sm font-bold">{label}</span>
+              </button>
+            ))}
           </div>
-          
-          <div>
-            <label htmlFor="role" className="mb-1.5 block text-sm font-medium text-ink">
-              Role
-            </label>
-            <select
-              id="role"
-              value={role}
-              onChange={(e) => setRole(e.target.value as Role)}
-              className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-ink focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="officer">Control Room Officer</option>
-              <option value="commuter">Passenger / Commuter</option>
-            </select>
-          </div>
+        </fieldset>
+        <div>
+          <label htmlFor="email" className="mb-2 block text-sm font-semibold text-ink">Email address</label>
+          <input
+            id="email"
+            type="email"
+            required
+            placeholder={role === "officer" ? "officer@safetrip.id" : "commuter@safetrip.id"}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="h-12 w-full rounded-xl border border-hairline bg-white px-4 text-ink placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
         </div>
 
-        <div className="mt-2 flex flex-col gap-3">
+        <div className="mt-1 flex flex-col gap-3">
           <button
             type="submit"
             className={cn(
-              "flex w-full justify-center rounded-full bg-primary py-3 px-4",
-              "text-sm font-bold text-white shadow-sm",
-              "transition-colors duration-200 hover:bg-primary-active",
+              "flex h-12 w-full items-center justify-center gap-2 rounded-full bg-midnight px-4",
+              "text-sm font-bold text-white",
+              "transition-colors hover:bg-primary",
               "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
             )}
           >
-            Sign In
+            Enter {role === "officer" ? "control room" : "commuter app"} <ArrowRight className="h-4 w-4" />
           </button>
-          <div className="mt-8 border-t border-slate-100 pt-6">
-            <p className="text-center text-xs leading-relaxed text-muted">
-              <strong className="text-ink">Demo Shortcuts:</strong>
-              <br />
-              Press{" "}
-              <kbd className="mx-1 rounded bg-cloud px-1.5 py-0.5 font-mono text-ink border border-slate-200">
-                Alt+C
-              </kbd>{" "}
-              for Commuter
-              <br />
-              Press{" "}
-              <kbd className="mx-1 mt-2 rounded bg-cloud px-1.5 py-0.5 font-mono text-ink border border-slate-200">
-                Alt+O
-              </kbd>{" "}
-              for Officer
-            </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs text-muted">
+            <span>Quick fill:</span>
+            <kbd className="rounded-lg border border-hairline bg-white px-2 py-1 font-sans font-semibold text-ink">Alt+C · Commuter</kbd>
+            <kbd className="rounded-lg border border-hairline bg-white px-2 py-1 font-sans font-semibold text-ink">Alt+O · Officer</kbd>
           </div>
         </div>
       </form>

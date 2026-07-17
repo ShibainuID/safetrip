@@ -1,0 +1,25 @@
+{
+  "camera_id": "CAM_TA_UPPER_CONCOURSE_01",
+  "name": "Upper Concourse Camera 01",
+  "video_path": "data/demo-videos/feature-1/Indonesian_commuters_walking_thr…_202607171431.mp4",
+  "fps_override": null,
+  "enabled_events": ["crowd_compression"],
+  "zones": [
+    {
+      "zone_id": "ZONE_UPPER_CONCOURSE_FLOW",
+      "zone_type": "crowd_monitoring",
+      "polygon": [[90, 180], [1190, 180], [1280, 680], [0, 680]],
+      "capacity": 32,
+      "risk_multiplier": 1.2,
+      "danger_direction": null
+    },
+    {
+      "zone_id": "ZONE_UPPER_CONCOURSE_NORMAL",
+      "zone_type": "normal",
+      "polygon": [[0, 150], [1280, 150], [1280, 720], [0, 720]],
+      "capacity": null,
+      "risk_multiplier": 1.0,
+      "danger_direction": null
+    }
+  ]
+}

@@ -1,15 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Home,
   Cctv,
   TriangleAlert,
   Search,
-  ChevronLeft,
   LogOut,
-  ChevronRight,
+  CircleUserRound,
 } from "lucide-react";
 import { useRoleGuard, useAuth } from "@/lib/auth-context";
 import { clsx, type ClassValue } from "clsx";
@@ -30,29 +29,31 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const user = useRoleGuard("officer");
   const { logout } = useAuth();
   const pathname = usePathname();
-  const router = useRouter();
 
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-cloud text-ink flex flex-col">
-      {/* Top Header */}
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-white border-b border-hairline px-6 lg:px-10">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="text-lg font-extrabold tracking-tight text-primary">
-            Safe Trip
+    <div className="operator-theme flex min-h-screen flex-col bg-cloud text-ink">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-hairline bg-midnight px-5 text-white lg:px-8">
+        <div className="flex items-center gap-5">
+          <Link href="/dashboard" className="flex items-center gap-2 text-lg font-extrabold tracking-[-0.035em]">
+            <span className="grid h-7 w-7 place-items-center rounded-lg bg-signal text-xs font-black text-signal-ink">S</span>
+            SafeTrip
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-signal" />
-            <span className="text-xs font-semibold text-muted">Admin Online</span>
+          <div className="hidden items-center gap-2 border-l border-white/15 pl-5 sm:flex">
+            <span className="h-2 w-2 rounded-full bg-signal shadow-[0_0_12px_oklch(0.72_0.16_235)]" />
+            <span className="text-xs font-semibold text-frost/65">Operations online</span>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-semibold text-ink">Role: {user.role}</span>
+        <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-2 text-right sm:flex">
+            <CircleUserRound className="h-5 w-5 text-frost/60" />
+            <div><p className="text-xs font-semibold">Control room</p><p className="text-[10px] text-frost/50">{user.role}</p></div>
+          </div>
           <button
             onClick={logout}
             title="Sign out"
-            className="rounded-full p-2 text-muted transition-colors hover:bg-surface-strong hover:text-ink"
+            className="rounded-full p-2 text-frost/60 transition-colors hover:bg-white/10 hover:text-white"
           >
             <LogOut className="h-5 w-5" />
           </button>
@@ -60,8 +61,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <div className="flex flex-1 items-start">
-        {/* Left Sidebar */}
-        <aside className="sticky top-16 flex h-[calc(100vh-4rem)] w-16 shrink-0 flex-col gap-1 bg-white border-r border-hairline py-4 md:w-60 md:px-3">
+        <aside className="sticky top-16 flex h-[calc(100vh-4rem)] w-[72px] shrink-0 flex-col gap-2 border-r border-hairline bg-white py-5 md:w-60 md:px-3">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
@@ -69,24 +69,22 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 key={href}
                 href={href}
                 className={cn(
-                  "group flex items-center justify-center gap-3 rounded-full py-3 transition-colors md:justify-start md:px-4",
+                  "group flex items-center justify-center gap-3 rounded-xl py-3 transition-colors md:justify-start md:px-4",
                   active
-                    ? "bg-primary text-white"
-                    : "text-muted hover:bg-surface-strong hover:text-ink"
+                    ? "bg-signal text-signal-ink"
+                    : "text-muted hover:bg-surface-strong hover:text-ink",
                 )}
               >
                 <Icon className="h-5 w-5 shrink-0" />
                 <span className="hidden text-sm font-semibold md:block">{label}</span>
-                {active && (
-                  <ChevronRight className="ml-auto hidden h-4 w-4 md:block opacity-70" />
-                )}
+                {active && <span className="ml-auto hidden h-1.5 w-1.5 rounded-full bg-signal-ink/60 md:block" />}
               </Link>
             );
           })}
         </aside>
 
         {/* Content */}
-        <main className="min-w-0 flex-1 p-6 lg:p-10">{children}</main>
+        <main className="min-w-0 flex-1 p-5 md:p-7 lg:p-10">{children}</main>
       </div>
     </div>
   );

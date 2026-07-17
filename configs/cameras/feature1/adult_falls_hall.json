@@ -1,0 +1,17 @@
+{
+  "camera_id": "CAM_TA_CONCOURSE_FALL_01",
+  "name": "Concourse Hall Camera 01",
+  "video_path": "data/demo-videos/feature-1/Adult_falls_on_floor_202607171330.mp4",
+  "fps_override": null,
+  "enabled_events": ["possible_person_down"],
+  "zones": [
+    {
+      "zone_id": "ZONE_CONCOURSE_FLOOR",
+      "zone_type": "normal",
+      "polygon": [[0, 180], [1280, 180], [1280, 720], [0, 720]],
+      "capacity": null,
+      "risk_multiplier": 1.0,
+      "danger_direction": null
+    }
+  ]
+}

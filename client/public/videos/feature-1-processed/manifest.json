@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "feeds": [
+    {
+      "camera_id": "CAM_TA_CONCOURSE_FALL_01",
+      "name": "Concourse Hall Camera 01",
+      "location": "Tanah Abang Concourse Hall",
+      "video_src": "/videos/feature-1-processed/adult-fall-hall.mp4",
+      "incident_count": 0,
+      "incident_types": [],
+      "source": "prerecorded_pipeline_output"
+    },
+    {
+      "camera_id": "CAM_TA_PLATFORM_03",
+      "name": "Platform 3 Camera 03",
+      "location": "Tanah Abang Platform 3",
+      "video_src": "/videos/feature-1-processed/platform-walk.mp4",
+      "incident_count": 3,
+      "incident_types": [
+        "restricted_zone_intrusion"
+      ],
+      "source": "prerecorded_pipeline_output"
+    },
+    {
+      "camera_id": "CAM_TA_PLATFORM_CROWD_02",
+      "name": "Platform Crowd Camera 02",
+      "location": "Tanah Abang Platform 2",
+      "video_src": "/videos/feature-1-processed/dense-platform-crowd.mp4",
+      "incident_count": 0,
+      "incident_types": [],
+      "source": "prerecorded_pipeline_output"
+    },
+    {
+      "camera_id": "CAM_TA_UPPER_CONCOURSE_01",
+      "name": "Upper Concourse Camera 01",
+      "location": "Tanah Abang Upper Concourse",
+      "video_src": "/videos/feature-1-processed/concourse-flow.mp4",
+      "incident_count": 0,
+      "incident_types": [],
+      "source": "prerecorded_pipeline_output"
+    },
+    {
+      "camera_id": "CAM_TA_TICKET_GATE_01",
+      "name": "Ticket Gate Camera 01",
+      "location": "Tanah Abang Ticket Gates",
+      "video_src": "/videos/feature-1-processed/ticket-gate-flow.mp4",
+      "incident_count": 9,
+      "incident_types": [
+        "restricted_zone_intrusion"
+      ],
+      "source": "prerecorded_pipeline_output"
+    },
+    {
+      "camera_id": "CAM_TA_LINK_CORRIDOR_FALL_01",
+      "name": "Link Corridor Camera 01",
+      "location": "Tanah Abang Link Corridor",
+      "video_src": "/videos/feature-1-processed/passenger-fall-corridor.mp4",
+      "incident_count": 1,
+      "incident_types": [
+        "possible_person_down"
+      ],
+      "source": "prerecorded_pipeline_output"
+    }
+  ]
+}
