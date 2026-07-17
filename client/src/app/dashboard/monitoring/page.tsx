@@ -86,8 +86,13 @@ export default function LiveMonitoringPage() {
       c.location.toLowerCase().includes(filter.toLowerCase()),
   );
 
-  const urgentCams = filtered.filter(isAlert);
-  const allCams = filtered;
+  const isUrgent = (cam: Camera) =>
+    isAlert(cam) ||
+    cam.name.toLowerCase().includes("platform") ||
+    cam.name.toLowerCase().includes("gate");
+
+  const urgentCams = filtered.filter(isUrgent);
+  const otherCams = filtered.filter((cam) => !isUrgent(cam));
 
   return (
     <div className="flex flex-col gap-8">
@@ -136,35 +141,62 @@ export default function LiveMonitoringPage() {
         </div>
       ) : (
         <>
-          {/* Urgent Overview — cameras with alert/critical status */}
-          {urgentCams.length > 0 && (
-            <section>
-              <h1 className="mb-4 text-xl font-bold text-ink">
-                Urgent Overview
-              </h1>
+          {/* Section 1: Priority Surveillance */}
+          <section>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-ink">Priority Surveillance</h2>
+                {urgentCams.some(isAlert) && (
+                  <span className="flex items-center gap-1.5 rounded-full bg-alert/10 px-3 py-1 text-xs font-bold text-alert animate-pulse">
+                    <Radio className="h-3 w-3" /> Urgent Activity Detected
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            {urgentCams.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-2 rounded-[24px] border border-dashed border-slate-300 bg-surface-strong p-12 text-center">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-signal/10 text-signal">
+                  <Radio className="h-6 w-6" />
+                </span>
+                <p className="font-bold text-ink">All Clear</p>
+                <p className="text-sm text-muted">No high density or urgent activity detected at priority locations.</p>
+              </div>
+            ) : (
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                 {urgentCams.map((cam, i) => (
                   <CctvTile
                     key={cam.camera_id}
                     label={`${cam.name} · ${cam.location}`}
                     boxes={boxesForCamera(i)}
-                    alert
+                    alert={isAlert(cam)}
                   />
                 ))}
               </div>
-            </section>
-          )}
+            )}
+          </section>
 
-          {/* CCTV Overview — all cameras */}
+          {/* Section 2: Station & Train Coverage */}
           <section>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-ink">CCTV Overview</h2>
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-signal">
-                <Radio className="h-3.5 w-3.5" />
-                Live
+            <div className="mb-4 flex items-center justify-between flex-wrap gap-4">
+              <h2 className="text-xl font-bold text-ink">Station & Train Coverage</h2>
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 border-2 border-signal rounded-sm"></span>
+                  <span className="text-muted">Tracked Person</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 border-2 border-primary rounded-sm"></span>
+                  <span className="text-muted">Normal Movement</span>
+                </div>
+                <div className="flex items-center gap-1.5 font-semibold text-signal ml-2">
+                  <Radio className="h-3.5 w-3.5" />
+                  Live
+                </div>
               </div>
             </div>
-            {allCams.length === 0 ? (
+            
+            {otherCams.length === 0 ? (
               <p className="py-12 text-center text-muted">
                 {filter
                   ? "No cameras match your filter."
@@ -172,11 +204,11 @@ export default function LiveMonitoringPage() {
               </p>
             ) : (
               <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                {allCams.map((cam, i) => (
+                {otherCams.map((cam, i) => (
                   <CctvTile
                     key={cam.camera_id}
                     label={`${cam.name} · ${cam.location}`}
-                    boxes={boxesForCamera(i)}
+                    boxes={boxesForCamera(i + urgentCams.length)}
                     alert={isAlert(cam)}
                   />
                 ))}
