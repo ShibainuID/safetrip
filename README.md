@@ -1,6 +1,6 @@
-# TransitShield AI Vision
+# TransitShield AI
 
-Event-specific CCTV inference for the TransitShield Live Safety Response workflow.
+Human-reviewed CCTV safety response and post-incident investigation for public transportation.
 
 The MVP supports exactly three human-reviewed events:
 
@@ -13,13 +13,13 @@ The MVP supports exactly three human-reviewed events:
 ```bash
 conda activate bdc2026-dinov3
 export PYTHONPATH=src
-python -m pytest -q
+python -m pytest tests -q
 ```
 
 The same commands can be run without activating the shell:
 
 ```bash
-conda run -n bdc2026-dinov3 env PYTHONPATH=src python -m pytest -q
+conda run -n bdc2026-dinov3 env PYTHONPATH=src python -m pytest tests -q
 ```
 
 The server has no migration framework. After schema changes, rebuild the ignored hackathon database from the repository root:
@@ -28,6 +28,35 @@ The server has no migration framework. After schema changes, rebuild the ignored
 rm server/data/transitshield.db
 python server/seed.py
 ```
+
+## Run the investigation API
+
+Install the server dependencies inside the same Conda environment, then start FastAPI from the repository root:
+
+```bash
+python -m pip install -r server/requirements.txt
+uvicorn server.app.main:app --reload
+```
+
+Gemini is optional for the deterministic demo. To enable live structured extraction and video verification:
+
+```bash
+export GEMINI_API_KEY="your-key"
+export GEMINI_MODEL="gemini-3.5-flash"  # optional override
+```
+
+`GOOGLE_API_KEY` is also accepted and takes precedence over `GEMINI_API_KEY`. Without credentials or local footage, the controlled Tanah Abang scenario uses cached extraction and cached VLM explanations. Unrelated reports return an explicit `fallback` source instead of fabricated attributes.
+
+Generated MP4 files belong in the ignored `data/investigation-videos/` directory using the neutral names `clip-ta-001.mp4` through `clip-ta-009.mp4`. Missing media is returned as `url: null` and `media_available: false`.
+
+Run the server contract tests with:
+
+```bash
+uv run --no-project --with-requirements server/requirements.txt \
+  env PYTHONPATH=. python -m pytest server/tests -q
+```
+
+The complete API workflow, request bodies, reset behavior, and demo limitations are documented in [`docs/post-incident-investigation.md`](docs/post-incident-investigation.md).
 
 ## Run one camera
 

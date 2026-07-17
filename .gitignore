@@ -9,6 +9,7 @@ __pycache__/
 # Generated vision artifacts and large local assets
 outputs/
 data/demo-videos/
+data/investigation-videos/
 data/cached-ai/
 models/
 *.pt

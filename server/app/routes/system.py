@@ -2,6 +2,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
+from ..db.orm import (
+    AuditEvent,
+    CandidateClip,
+    Investigation,
+    InvestigationTimelineEntry,
+    Report,
+)
 
 router = APIRouter(prefix="/api/v1", tags=["system"])
 
@@ -31,5 +38,31 @@ def list_scenarios():
 
 
 @router.post("/demo/reset")
-def reset_demo():
-    return {"status": "reset", "message": "Demo data reset to initial state"}
+def reset_demo(db: Session = Depends(get_db)):
+    deleted = {
+        "timeline_entries": db.query(InvestigationTimelineEntry).delete(
+            synchronize_session=False
+        ),
+        "candidate_clips": db.query(CandidateClip).delete(
+            synchronize_session=False
+        ),
+        "investigations": db.query(Investigation).delete(
+            synchronize_session=False
+        ),
+        "reports": db.query(Report).delete(synchronize_session=False),
+        "audit_events": (
+            db.query(AuditEvent)
+            .filter(
+                AuditEvent.entity_type.in_(
+                    ("report", "investigation", "candidate")
+                )
+            )
+            .delete(synchronize_session=False)
+        ),
+    }
+    db.commit()
+    return {
+        "status": "reset",
+        "message": "Post-incident demo data reset",
+        "deleted": deleted,
+    }
