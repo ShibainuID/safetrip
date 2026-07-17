@@ -1,0 +1,25 @@
+{
+  "camera_id": "CAM_TA_PLATFORM_03",
+  "name": "Platform 3 Camera 03",
+  "video_path": "data/demo-videos/feature-1/Adult_walks_along_platform_202607171208.mp4",
+  "fps_override": null,
+  "enabled_events": ["restricted_zone_intrusion"],
+  "zones": [
+    {
+      "zone_id": "ZONE_PLATFORM_EDGE",
+      "zone_type": "restricted",
+      "polygon": [[760, 175], [1280, 145], [1280, 720], [820, 720]],
+      "capacity": null,
+      "risk_multiplier": 1.7,
+      "danger_direction": [1.0, 0.0]
+    },
+    {
+      "zone_id": "ZONE_PLATFORM_SAFE",
+      "zone_type": "normal",
+      "polygon": [[0, 170], [760, 175], [820, 720], [0, 720]],
+      "capacity": null,
+      "risk_multiplier": 1.0,
+      "danger_direction": null
+    }
+  ]
+}

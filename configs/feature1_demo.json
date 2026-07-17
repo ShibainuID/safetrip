@@ -1,0 +1,34 @@
+{
+  "entries": [
+    {
+      "camera_config": "cameras/feature1/adult_falls_hall.json",
+      "location": "Tanah Abang Concourse Hall",
+      "public_filename": "adult-fall-hall.mp4"
+    },
+    {
+      "camera_config": "cameras/feature1/platform_walk.json",
+      "location": "Tanah Abang Platform 3",
+      "public_filename": "platform-walk.mp4"
+    },
+    {
+      "camera_config": "cameras/feature1/dense_platform_crowd.json",
+      "location": "Tanah Abang Platform 2",
+      "public_filename": "dense-platform-crowd.mp4"
+    },
+    {
+      "camera_config": "cameras/feature1/concourse_flow.json",
+      "location": "Tanah Abang Upper Concourse",
+      "public_filename": "concourse-flow.mp4"
+    },
+    {
+      "camera_config": "cameras/feature1/ticket_gate_flow.json",
+      "location": "Tanah Abang Ticket Gates",
+      "public_filename": "ticket-gate-flow.mp4"
+    },
+    {
+      "camera_config": "cameras/feature1/passenger_falls_corridor.json",
+      "location": "Tanah Abang Link Corridor",
+      "public_filename": "passenger-fall-corridor.mp4"
+    }
+  ]
+}

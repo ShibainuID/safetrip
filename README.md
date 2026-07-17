@@ -518,6 +518,22 @@ python scripts/run_demo_library.py \
 
 Each camera writes to its own output directory. The library runner combines incidents into `outputs/library/incidents.json` without overwriting earlier cameras.
 
+### Generate all Feature 1 monitoring videos
+
+The Feature 1 batch command processes all six prepared camera clips with the
+same full-AI YOLO, ByteTrack, event-rule, evidence, and annotation pipeline used
+by the single-camera runner:
+
+```bash
+conda activate bdc2026-dinov3
+python scripts/run_feature1_demo.py
+```
+
+Canonical pipeline artifacts are written to `outputs/feature-1/cameras/`. After
+all six cameras finish successfully, annotated MP4 files and a browser manifest
+are published to `client/public/videos/feature-1-processed/`. The Live Monitoring
+page reads that manifest and labels the feeds as prerecorded pipeline output.
+
 ## Run Feature 2: Post-Incident Investigation
 
 Feature 2 runs through FastAPI. The complete API contract and a copy-pasteable curl workflow are documented in [`docs/post-incident-investigation.md`](docs/post-incident-investigation.md).
