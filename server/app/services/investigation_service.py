@@ -210,7 +210,6 @@ class InvestigationService:
                 clip_metadata={
                     "start_time": clip["start_time"],
                     "end_time": clip["end_time"],
-                    "attributes": clip["attributes"],
                     "matched_attributes": clip["matched_attributes"],
                     "metadata_score": clip["metadata_score"],
                     "media_available": media_available,

@@ -108,6 +108,7 @@ def test_cached_service_flow_persists_ranked_vlm_candidates(db_session):
         for candidate in candidates
     )
     assert all(candidate.clip_metadata["matched_attributes"] for candidate in candidates)
+    assert all("attributes" not in candidate.clip_metadata for candidate in candidates)
 
 
 def test_report_without_demo_match_uses_honest_extraction_fallback(db_session):
