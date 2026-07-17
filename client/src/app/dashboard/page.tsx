@@ -1,12 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { IncidentCard, type Incident } from "@/components/incident-card";
-import { ChevronDown, Loader2 } from "lucide-react";
-import { createIncident, fetchIncidents, updateIncident } from "@/lib/api";
+import { 
+  fetchIncidents, 
+  fetchReports, 
+  fetchCameras,
+  type IncidentList,
+  type ReportList,
+  type Camera 
+} from "@/lib/api";
+import { CctvTile } from "@/components/cctv-tile";
+import { Loader2, AlertTriangle, ArrowRight, Activity, ShieldAlert, FileText, CheckCircle } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
-  const [incidents, setIncidents] = useState<any[]>([]);
+  const router = useRouter();
+  const [incidents, setIncidents] = useState<IncidentList[]>([]);
+  const [reports, setReports] = useState<ReportList[]>([]);
+  const [cameras, setCameras] = useState<Camera[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,9 +28,15 @@ export default function DashboardPage() {
     async function loadData() {
       try {
         setLoading(true);
-        const data = await fetchIncidents();
+        const [incRes, repRes, camRes] = await Promise.all([
+          fetchIncidents(),
+          fetchReports(),
+          fetchCameras()
+        ]);
         if (mounted) {
-          setIncidents(data);
+          setIncidents(incRes);
+          setReports(repRes);
+          setCameras(camRes);
           setError(null);
         }
       } catch (err) {
@@ -34,165 +52,203 @@ export default function DashboardPage() {
     }
     
     loadData();
-    // Poll every 5 seconds for MVP demo
-    const interval = setInterval(loadData, 5000);
+    const interval = setInterval(loadData, 10000); // 10s poll
     return () => {
       mounted = false;
       clearInterval(interval);
     };
   }, []);
 
-  const handleStatusChange = async (fullIncidentId: string, newStatus: string) => {
-    try {
-      await updateIncident(fullIncidentId, { status: newStatus });
-      const data = await fetchIncidents();
-      setIncidents(data);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to update incident status.");
-    }
-  };
-
-  const handleTriggerDemo = async () => {
-    try {
-      await createIncident({
-        incident_type: "demo_trigger",
-        severity: "medium",
-        location: "Concourse B, Gate 4",
-        description: "Demo incident manually triggered via dashboard",
-        source_mode: "manual_demo"
-      });
-      const data = await fetchIncidents();
-      setIncidents(data);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to create demo incident.");
-    }
-  };
-
-  // Split incidents by status
-  const resolvedIncidents = incidents.filter(i => i.status === "resolved").slice(0, 6);
-  const newIncidents = incidents.filter(i => i.status === "open").slice(0, 6);
-  const reviewIncidents = incidents.filter(i => i.status === "assigned" || i.status === "in_progress").slice(0, 5);
-
-  // Map backend model to IncidentCard props
-  const mapToCard = (i: any): Incident => ({
-    id: i.incident_id.substring(0, 8).toUpperCase(),
-    description: i.description || `Detected ${i.incident_type} at ${i.location}`,
-    resolvedBy: i.assignments?.[0]?.officer_name || "Unassigned",
-    resolvedAt: new Date(i.created_at).toLocaleDateString("en-GB", {
-      day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
-    }),
-    status: i.status,
-  });
+  const openIncidents = incidents.filter(i => i.status !== "resolved");
+  const openReports = reports.filter(r => r.status !== "resolved");
+  const urgentCams = cameras.filter(c => c.status === "alert" || c.status === "critical");
+  const resolvedToday = incidents.filter(i => i.status === "resolved").length;
 
   return (
     <div className="flex flex-col gap-10">
       {error && (
         <div className="rounded-lg bg-alert/10 p-4 border border-alert/20 text-alert flex items-center justify-between">
-          <p className="font-medium">{error} Make sure the Python API is running.</p>
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            <p className="font-medium">{error} Make sure the Python API is running.</p>
+          </div>
         </div>
       )}
 
-      {/* Incident Reports */}
-      <section>
-        <div className="mb-5 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-ink">Incident Reports</h1>
-          <div className="flex gap-3">
-            <button 
-              onClick={handleTriggerDemo}
-              className="rounded-full bg-surface-strong px-5 py-2 text-sm font-bold text-ink transition-colors hover:bg-slate-200"
-            >
-              Trigger Demo
-            </button>
-            <button className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-primary-active">
-              See All
-            </button>
-          </div>
-        </div>
-        
-        {loading && incidents.length === 0 ? (
-          <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-navy/50" /></div>
-        ) : (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {resolvedIncidents.length > 0 ? (
-              resolvedIncidents.map((incident, i) => (
-                <IncidentCard key={i} incident={mapToCard(incident)} onStatusChange={(status) => handleStatusChange(incident.incident_id, status)} />
-              ))
-            ) : (
-              <p className="text-muted text-sm col-span-full">No resolved incidents found.</p>
-            )}
-          </div>
-        )}
-      </section>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-ink">Dashboard Overview</h1>
+      </div>
 
-      {/* Incident On Review */}
-      <section className="rounded-[24px] border border-hairline bg-white shadow-sm p-5 lg:p-6">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-ink">Incident On Review</h2>
-          <button className="flex items-center gap-2 rounded-full border border-hairline px-4 py-1.5 text-sm font-medium text-ink transition-colors hover:bg-surface-strong">
-            Week
-            <ChevronDown className="h-4 w-4" />
-          </button>
-        </div>
+      {loading && incidents.length === 0 ? (
+        <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary/50" /></div>
+      ) : (
+        <>
+          {/* KPI Cards */}
+          <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-[24px] border border-hairline bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-alert/10 text-alert">
+                  <Activity className="h-6 w-6" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-muted">Open Incidents</p>
+                  <p className="text-2xl font-bold text-ink">{openIncidents.length}</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-[24px] border border-hairline bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <FileText className="h-6 w-6" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-muted">Passenger Reports</p>
+                  <p className="text-2xl font-bold text-ink">{openReports.length}</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-[24px] border border-hairline bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+                  <ShieldAlert className="h-6 w-6" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-muted">Urgent Cameras</p>
+                  <p className="text-2xl font-bold text-ink">{urgentCams.length}</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-[24px] border border-hairline bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-signal/10 text-signal">
+                  <CheckCircle className="h-6 w-6" />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-muted">Resolved Today</p>
+                  <p className="text-2xl font-bold text-ink">{resolvedToday}</p>
+                </div>
+              </div>
+            </div>
+          </section>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-separate border-spacing-y-1 text-left">
-            <thead>
-              <tr className="bg-surface-strong text-sm font-bold text-ink">
-                <th className="rounded-l-xl px-4 py-3">Incident</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Time</th>
-                <th className="px-4 py-3">Location</th>
-                <th className="px-4 py-3">Handled by</th>
-                <th className="rounded-r-xl px-4 py-3 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reviewIncidents.map((row, i) => {
-                const d = new Date(row.created_at);
-                return (
-                  <tr key={i} className="text-sm text-ink border-b border-hairline">
-                    <td className="px-4 py-3.5 font-semibold text-primary">#{row.incident_id.substring(0, 8).toUpperCase()}</td>
-                    <td className="px-4 py-3.5">{d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</td>
-                    <td className="px-4 py-3.5">{d.toLocaleTimeString("en-GB")}</td>
-                    <td className="px-4 py-3.5">
-                      <button className="underline underline-offset-2 hover:text-primary transition-colors">
-                        {row.location || "N/A"}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3.5">{row.assignments?.[0]?.officer_name || "Pending"}</td>
-                    <td className="px-4 py-3.5 text-right font-bold capitalize">
-                      {row.status.replace("_", " ")}
-                    </td>
-                  </tr>
-                );
-              })}
-              {reviewIncidents.length === 0 && !loading && (
-                <tr><td colSpan={6} className="text-center py-8 text-muted">No incidents under review</td></tr>
+          <div className="grid gap-10 xl:grid-cols-2">
+            {/* Urgent Cameras */}
+            <section className="flex flex-col gap-4 rounded-[24px] border border-hairline bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-ink">Urgent Activity</h2>
+                <Link href="/dashboard/monitoring" className="text-sm font-bold text-primary hover:underline flex items-center gap-1">
+                  View All <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+              {urgentCams.length === 0 ? (
+                <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-hairline bg-surface-strong p-8 text-center text-muted">
+                  All clear! No urgent activity detected.
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {urgentCams.slice(0, 2).map((cam, i) => (
+                    <CctvTile
+                      key={cam.camera_id}
+                      label={cam.name}
+                      boxes={[{ x: 40, y: 30, w: 20, h: 40, kind: "flag" }]}
+                      alert
+                    />
+                  ))}
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+            </section>
 
-      {/* New Incidents */}
-      <section>
-        <h2 className="mb-5 text-2xl font-bold text-ink">New Incidents</h2>
-        {loading && incidents.length === 0 ? (
-          <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-navy/50" /></div>
-        ) : (
-          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {newIncidents.length > 0 ? (
-              newIncidents.map((incident, i) => (
-                <IncidentCard key={i} incident={mapToCard(incident)} onStatusChange={(status) => handleStatusChange(incident.incident_id, status)} />
-              ))
-            ) : (
-              <p className="text-muted text-sm col-span-full">No new incidents reported.</p>
-            )}
+            {/* Open Reports */}
+            <section className="flex flex-col gap-4 rounded-[24px] border border-hairline bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-ink">Open Reports</h2>
+                <Link href="/dashboard/investigation" className="text-sm font-bold text-primary hover:underline flex items-center gap-1">
+                  Investigate <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+              {openReports.length === 0 ? (
+                <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-hairline bg-surface-strong p-8 text-center text-muted">
+                  No open passenger reports.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-hairline text-muted">
+                        <th className="pb-3 font-semibold">ID</th>
+                        <th className="pb-3 font-semibold">Location</th>
+                        <th className="pb-3 font-semibold">Description</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-hairline">
+                      {openReports.slice(0, 4).map(report => (
+                        <tr key={report.report_id} className="text-ink transition-colors hover:bg-surface-strong cursor-pointer" onClick={() => router.push(`/dashboard/investigation?report=${report.report_id}`)}>
+                          <td className="py-3 font-semibold text-primary">#{report.report_id.substring(0, 6).toUpperCase()}</td>
+                          <td className="py-3">{report.location || "Unknown"}</td>
+                          <td className="py-3 max-w-[200px] truncate">{report.description}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
           </div>
-        )}
-      </section>
+
+          {/* Recent Incidents Table */}
+          <section className="flex flex-col gap-4 rounded-[24px] border border-hairline bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-ink">Recent System Incidents</h2>
+              <Link href="/dashboard/incidents" className="text-sm font-bold text-primary hover:underline flex items-center gap-1">
+                View All <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="bg-surface-strong font-bold text-ink">
+                    <th className="rounded-l-xl px-4 py-3">Incident ID</th>
+                    <th className="px-4 py-3">Date & Time</th>
+                    <th className="px-4 py-3">Type</th>
+                    <th className="px-4 py-3">Location</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="rounded-r-xl px-4 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-hairline">
+                  {incidents.slice(0, 5).map(incident => {
+                    const d = incident.created_at ? new Date(incident.created_at) : new Date();
+                    return (
+                      <tr key={incident.incident_id} className="text-ink hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-4 font-semibold text-primary">#{incident.incident_id.substring(0, 8).toUpperCase()}</td>
+                        <td className="px-4 py-4">{d.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</td>
+                        <td className="px-4 py-4 capitalize">{incident.incident_type.replace(/_/g, " ")}</td>
+                        <td className="px-4 py-4">{incident.location || "N/A"}</td>
+                        <td className="px-4 py-4">
+                          <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold capitalize ${
+                            incident.status === "resolved" ? "bg-signal/10 text-signal" : "bg-alert/10 text-alert"
+                          }`}>
+                            {incident.status.replace("_", " ")}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-right">
+                          <Link href="/dashboard/incidents" className="font-semibold text-primary hover:underline">
+                            Manage
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {incidents.length === 0 && (
+                    <tr><td colSpan={6} className="text-center py-8 text-muted">No incidents recorded.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }

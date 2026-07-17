@@ -23,11 +23,13 @@ const itemVariants: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } },
 };
 
+import Link from "next/link";
+
 const QUICK_ACTIONS = [
-  { label: "SOS", icon: Siren, color: "text-alert", bg: "bg-alert/10" },
-  { label: "Share Live Loc", icon: Navigation, color: "text-primary", bg: "bg-primary/10" },
-  { label: "Nearest Security", icon: ShieldCheck, color: "text-teal", bg: "bg-teal/10" },
-  { label: "Safe Tracking", icon: Shield, color: "text-signal", bg: "bg-signal/10" },
+  { label: "Report Incident", icon: Siren, color: "text-alert", bg: "bg-alert/10", href: "/app/report" },
+  { label: "Share Live Loc", icon: Navigation, color: "text-primary", bg: "bg-primary/10", href: "/app" },
+  { label: "Nearest Security", icon: ShieldCheck, color: "text-teal", bg: "bg-teal/10", href: "/app" },
+  { label: "Safe Tracking", icon: Shield, color: "text-signal", bg: "bg-signal/10", href: "/app" },
 ];
 
 const RECENT_TRIPS = [
@@ -79,16 +81,17 @@ export default function CommuterHomePage() {
       <motion.section variants={itemVariants}>
         <h2 className="mb-3 md:mb-4 text-[17px] md:text-lg font-bold text-ink tracking-tight">Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
-          {QUICK_ACTIONS.map(({ label, icon: Icon, color, bg }) => (
-            <button
+          {QUICK_ACTIONS.map(({ label, icon: Icon, color, bg, href }) => (
+            <Link
               key={label}
+              href={href}
               className="group flex flex-col items-center justify-center gap-3 rounded-[24px] bg-white border border-hairline shadow-sm px-2 py-5 md:py-6 transition-all hover:border-primary/20 hover:shadow-md active:scale-95"
             >
               <div className={cn("flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-[18px] transition-transform duration-300 group-hover:scale-105 group-hover:-translate-y-1", bg)}>
                 <Icon className={cn("h-7 w-7 md:h-8 md:w-8", color)} strokeWidth={2} />
               </div>
               <span className="text-[13px] md:text-[14px] font-bold text-ink tracking-tight">{label}</span>
-            </button>
+            </Link>
           ))}
         </div>
       </motion.section>
