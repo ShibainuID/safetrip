@@ -9,12 +9,12 @@ import {
   ArrowRight,
   CheckCircle2,
   ChevronRight,
-  Eye,
   Fingerprint,
   Radio,
   Search,
   ShieldCheck,
 } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { PipelineShowcase } from "./pipeline-showcase";
 
 const CctvScene = dynamic(
@@ -32,24 +32,13 @@ const reveal = {
   transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] as const },
 };
 
-function Wordmark({ light = false }: { light?: boolean }) {
-  return (
-    <span className={`inline-flex items-center gap-2.5 font-extrabold tracking-[-0.035em] ${light ? "text-white" : "text-ink"}`}>
-      <span className={`grid h-7 w-7 place-items-center rounded-lg ${light ? "bg-signal text-signal-ink" : "bg-primary text-white"}`}>
-        <Eye className="h-4 w-4" strokeWidth={2.4} />
-      </span>
-      SafeTrip
-    </span>
-  );
-}
-
 export function LandingPage() {
   return (
     <div className="overflow-x-clip bg-cloud text-ink">
       <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 md:px-8">
         <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between rounded-2xl border border-hairline bg-white/90 px-4 text-ink shadow-[0_8px_8px_rgba(16,24,40,.08)] backdrop-blur-xl md:px-6">
           <Link href="/" aria-label="SafeTrip home">
-            <Wordmark />
+            <BrandLogo className="text-base" />
           </Link>
           <nav aria-label="Landing navigation" className="hidden items-center gap-7 text-sm text-muted md:flex">
             <a href="#pipeline" className="transition-colors hover:text-ink">How it works</a>
@@ -257,7 +246,7 @@ export function LandingPage() {
 
       <footer className="bg-[#050a12] px-5 py-10 text-white md:px-10">
         <div className="mx-auto flex max-w-[1320px] flex-col justify-between gap-5 border-t border-white/12 pt-8 md:flex-row md:items-center">
-          <Wordmark light />
+          <BrandLogo light />
           <p className="max-w-lg text-xs leading-5 text-frost/50">AI-assisted safety operations for public transit. Every consequential decision remains human-reviewed.</p>
           <p className="text-xs text-frost/40">© {new Date().getFullYear()} SafeTrip</p>
         </div>

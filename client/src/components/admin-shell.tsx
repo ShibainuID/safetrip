@@ -11,6 +11,7 @@ import {
   CircleUserRound,
 } from "lucide-react";
 import { useRoleGuard, useAuth } from "@/lib/auth-context";
+import { BrandLogo } from "@/components/brand-logo";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -37,8 +38,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-hairline bg-midnight px-5 text-white lg:px-8">
         <div className="flex items-center gap-5">
           <Link href="/dashboard" className="flex items-center gap-2 text-lg font-extrabold tracking-[-0.035em]">
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-signal text-xs font-black text-signal-ink">S</span>
-            SafeTrip
+            <BrandLogo light className="text-lg" />
           </Link>
           <div className="hidden items-center gap-2 border-l border-white/15 pl-5 sm:flex">
             <span className="h-2 w-2 rounded-full bg-signal shadow-[0_0_12px_oklch(0.72_0.16_235)]" />

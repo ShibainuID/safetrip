@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Navigation, TriangleAlert, User } from "lucide-react";
 import { useRoleGuard } from "@/lib/auth-context";
+import { BrandLogo } from "@/components/brand-logo";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -34,19 +35,14 @@ export function MobileShell({ children }: { children: React.ReactNode }) {
         
         {/* Mobile Header (Hidden on Desktop) */}
         <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-hairline bg-white px-5 md:hidden">
-          <span className="flex items-center gap-2 text-lg font-extrabold tracking-[-0.035em] text-ink">
-            <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary text-xs text-white">S</span>
-            SafeTrip
-          </span>
+          <BrandLogo className="text-lg" />
           <span className="flex items-center gap-2 text-xs font-semibold text-muted"><i className="h-2 w-2 rounded-full bg-signal" />Protected</span>
         </header>
 
         {/* Desktop Sidebar (Hidden on Mobile) */}
         <aside className="sticky top-0 z-30 hidden h-screen w-64 shrink-0 flex-col border-r border-hairline bg-white px-4 py-6 md:flex">
           <div className="mb-9 flex items-center justify-between px-3">
-            <span className="flex items-center gap-2 text-xl font-extrabold tracking-[-0.035em] text-ink">
-              <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-xs text-white">S</span>SafeTrip
-            </span>
+            <BrandLogo className="text-xl" />
           </div>
           <nav className="flex flex-col gap-2">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
