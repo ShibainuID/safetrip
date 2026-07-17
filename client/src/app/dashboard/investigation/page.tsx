@@ -16,19 +16,19 @@ const EXTRACTED_ATTRIBUTES = [
 const CANDIDATES = [
   {
     id: "REC-888",
-    label: "Platform B, Camera 2 — 17:07",
+    label: "Platform B, Camera 2 - 17:07",
     score: 0.92,
     note: "Grey top + backpack match; movement toward Exit 2.",
   },
   {
     id: "REC-765",
-    label: "Concourse L1, Camera 1 — 17:09",
+    label: "Concourse L1, Camera 1 - 17:09",
     score: 0.81,
     note: "Partial clothing match; direction consistent.",
   },
   {
     id: "REC-777",
-    label: "Exit 2 Gate, Camera 4 — 17:13",
+    label: "Exit 2 Gate, Camera 4 - 17:13",
     score: 0.74,
     note: "Backpack match; timestamp within window.",
   },
@@ -58,7 +58,7 @@ function InvestigationContent() {
       <section className="rounded-[24px] bg-white border border-hairline shadow-sm p-5 lg:p-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-ink">
-            Report #{id} — Extracted Attributes
+            Report #{id} - Extracted Attributes
           </h2>
           <span className="rounded-full bg-signal/15 px-3 py-1 text-xs font-bold text-signal">
             Human Verified
@@ -67,7 +67,7 @@ function InvestigationContent() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {EXTRACTED_ATTRIBUTES.map((attr) => (
             <div key={attr.label} className="rounded-xl bg-surface-strong px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+              <p className="text-sm font-semibold text-muted">
                 {attr.label}
               </p>
               <p className="mt-0.5 text-sm font-bold text-ink">{attr.value}</p>
@@ -131,7 +131,7 @@ function InvestigationContent() {
           <p className="mt-1 text-sm text-muted">
             {confirmed.length === 0
               ? "Confirm candidate clips to build the human-verified incident timeline."
-              : `${confirmed.length} clip(s) confirmed — timeline entries: ${confirmed
+              : `${confirmed.length} clip(s) confirmed - timeline entries: ${confirmed
                   .sort()
                   .join(" → ")}.`}
           </p>

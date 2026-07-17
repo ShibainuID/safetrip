@@ -3,7 +3,12 @@
 import { FakeMap } from "@/components/fake-map";
 import { TrainFront } from "lucide-react";
 
-const COMMUTE_MODES = ["MRT", "LRT", "KAI", "TJ"];
+const COMMUTE_MODES = [
+  { id: "MRT", img: "/Untitled design (26) 1.png" },
+  { id: "LRT", img: "/Untitled design (26) 2.png" },
+  { id: "KAI", img: "/Untitled design (26) 3.png" },
+  { id: "TJ", img: "/Untitled design (26) 4.png" },
+];
 
 export default function TrackPage() {
   return (
@@ -33,13 +38,11 @@ export default function TrackPage() {
         <div className="flex items-center justify-between rounded-full bg-surface-strong px-5 py-3.5 border border-hairline shadow-sm">
           {COMMUTE_MODES.map((mode) => (
             <button
-              key={mode}
-              title={mode}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-white transition-transform hover:scale-105 active:scale-95 shadow-sm border border-hairline"
+              key={mode.id}
+              title={mode.id}
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-white transition-transform hover:scale-105 active:scale-95 shadow-sm border border-hairline overflow-hidden p-1.5"
             >
-              <span className="text-[11px] font-extrabold tracking-tight text-primary">
-                {mode}
-              </span>
+              <img src={mode.img} alt={mode.id} className="h-full w-full object-contain" />
             </button>
           ))}
         </div>
