@@ -26,8 +26,9 @@ JAKARTA = datetime.timezone(datetime.timedelta(hours=7))
 
 @pytest.fixture
 def api_client(monkeypatch):
-    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
-    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.setenv("REPORT_LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("GOOGLE_API_KEY", "")
+    monkeypatch.setenv("GEMINI_API_KEY", "")
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -218,4 +219,3 @@ def test_demo_reset_removes_investigation_data_and_preserves_configuration(
         assert db.query(Officer).count() == 1
         assert db.query(Playbook).count() == 1
         assert db.query(AuditEvent).filter_by(entity_type="incident").count() == 1
-
